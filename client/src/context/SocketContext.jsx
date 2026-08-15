@@ -11,7 +11,7 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (user?._id) {
-      const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/';
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || (window.location.hostname === 'localhost' ? 'http://localhost:5001' : '/');
       const newSocket = io(socketUrl, {
         withCredentials: true,
         transports: ['websocket', 'polling']
