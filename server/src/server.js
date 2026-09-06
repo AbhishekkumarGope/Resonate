@@ -79,19 +79,24 @@ app.get('/api/health', (req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// Start server immediately
+// Database connection
+connectDB()
+  .then(() => {
+    console.log(' MongoDB connected successfully');
+  })
+  .catch((err) => {
+    console.error('Failed to connect to MongoDB:', err.message);
+  });
+
+// Start server only when running locally
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => {
-  console.log(`\n🎵 Let's Resonate Server running on port ${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}/api`);
-  console.log(`🔌 Socket.IO: ws://localhost:${PORT}`);
-});
-
-connectDB().then(() => {
-  console.log(`💾 MongoDB connected successfully\n`);
-}).catch((err) => {
-  console.error('Failed to connect to MongoDB:', err.message);
-});
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, () => {
+    console.log(`\n🎵 Let's Resonate Server running on port ${PORT}`);
+    console.log(`📡 API: http://localhost:${PORT}/api`);
+    console.log(`🔌 Socket.IO: ws://localhost:${PORT}`);
+  });
+}
 
 module.exports = { app, server, io };
