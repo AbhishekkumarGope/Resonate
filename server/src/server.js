@@ -89,8 +89,20 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Health check
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: "Let's Resonate API is running",
+    health: '/api/health'
+  });
+});
+
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: "Let's Resonate API is running", timestamp: new Date() });
+  res.json({
+    success: true,
+    message: "Let's Resonate API is running",
+    timestamp: new Date()
+  });
 });
 
 // Error handler
