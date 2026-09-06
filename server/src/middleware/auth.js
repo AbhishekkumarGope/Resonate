@@ -22,7 +22,8 @@ const protect = async (req, res, next) => {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const secret = process.env.JWT_SECRET || 'lets_resonate_jwt_secret_key_2024_fallback';
+    const decoded = jwt.verify(token, secret);
 
     // Get user from token
     const user = await User.findById(decoded.id);

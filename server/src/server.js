@@ -51,12 +51,29 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Create uploads directory
+// Create uploads directory safely
 const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (err) {
+  // Ignored in read-only serverless environments
 }
 app.use('/uploads', express.static(uploadsDir));
+
+// Ensure database connection middleware for serverless invocations
+app.use(async (req, res, next) => {
+  try {
+    if (process.env.MONGODB_URI) {
+      await connectDB();
+    }
+    next();
+  } catch (err) {
+    console.error('Database connection error:', err.message);
+    next(err);
+  }
+});
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -79,19 +96,21 @@ app.get('/api/health', (req, res) => {
 // Error handler
 app.use(errorHandler);
 
-// Database connection
-connectDB()
-  .then(() => {
-    console.log(' MongoDB connected successfully');
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB:', err.message);
-  });
+// Database connection for local startup
+if (process.env.MONGODB_URI) {
+  connectDB()
+    .then(() => {
+      console.log('MongoDB connected successfully');
+    })
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB:', err.message);
+    });
+}
 
-// Start server only when running locally
-const PORT = process.env.PORT || 5000;
+// Start server only when running locally (not on Vercel)
+const PORT = process.env.PORT || 5001;
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   server.listen(PORT, () => {
     console.log(`\n🎵 Let's Resonate Server running on port ${PORT}`);
     console.log(`📡 API: http://localhost:${PORT}/api`);
@@ -99,4 +118,8 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
-module.exports = { app, server, io };
+// Export app as default for Vercel/Serverless and keep server/io available
+module.exports = app;
+module.exports.app = app;
+module.exports.server = server;
+module.exports.io = io;

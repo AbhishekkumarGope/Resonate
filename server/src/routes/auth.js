@@ -6,11 +6,16 @@ const router = express.Router();
 
 // Generate tokens
 const generateTokens = (userId) => {
-  const token = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE
+  const secret = process.env.JWT_SECRET || 'lets_resonate_jwt_secret_key_2024_fallback';
+  const refreshSecret = process.env.JWT_REFRESH_SECRET || 'lets_resonate_refresh_secret_key_2024_fallback';
+  const expire = process.env.JWT_EXPIRE || '7d';
+  const refreshExpire = process.env.JWT_REFRESH_EXPIRE || '30d';
+
+  const token = jwt.sign({ id: userId }, secret, {
+    expiresIn: expire
   });
-  const refreshToken = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRE
+  const refreshToken = jwt.sign({ id: userId }, refreshSecret, {
+    expiresIn: refreshExpire
   });
   return { token, refreshToken };
 };
