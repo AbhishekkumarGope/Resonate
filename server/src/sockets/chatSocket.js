@@ -10,14 +10,18 @@ const initializeSocket = (io) => {
 
     // User joins with their ID
     socket.on('user_online', async (userId) => {
-      onlineUsers.set(userId, socket.id);
-      socket.userId = userId;
+      try {
+        onlineUsers.set(userId, socket.id);
+        socket.userId = userId;
 
-      // Update user online status
-      await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: new Date() });
+        // Update user online status
+        await User.findByIdAndUpdate(userId, { isOnline: true, lastSeen: new Date() });
 
-      // Notify friends
-      io.emit('user_status', { userId, isOnline: true });
+        // Notify friends
+        io.emit('user_status', { userId, isOnline: true });
+      } catch (error) {
+        console.error('Error updating user online status:', error.message);
+      }
     });
 
     // Join a chat room
@@ -105,8 +109,12 @@ const initializeSocket = (io) => {
 
       if (socket.userId) {
         onlineUsers.delete(socket.userId);
-        await User.findByIdAndUpdate(socket.userId, { isOnline: false, lastSeen: new Date() });
-        io.emit('user_status', { userId: socket.userId, isOnline: false });
+        try {
+          await User.findByIdAndUpdate(socket.userId, { isOnline: false, lastSeen: new Date() });
+          io.emit('user_status', { userId: socket.userId, isOnline: false });
+        } catch (error) {
+          console.error('Error updating user disconnect status:', error.message);
+        }
       }
     });
   });
